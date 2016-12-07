@@ -1,0 +1,1 @@
+sudo APPLICATION_ENV=${application_env} /usr/bin/supervisord -n -c /etc/supervisord.conf

@@ -2,8 +2,8 @@ provider "openstack" {
 }
 
 resource "openstack_compute_keypair_v2" "test-keypair" {
-  name = "bobbyKeypair"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTaCOFI3z2bs5fRF3bHZpT03cmH/6wbZgjO5NKqb8xHRXYx6HiQWiP2GVV+F281MHC/ZJ5RaU1ex+uSm6ZCymMu9sHVhqViqeNHpHQadPRGApJKS5JDbpvQKxx/FH2kC7yV8mUfdsYHbMFQnJVtfef7LuZqJtvyOMzs/pXUfpq3rhgtcWkAtiu1C9QB/S7OoZztjjiVKx4SUZUTQxiw4PKTWvsdZ5Ctdd1IUgtseXoHYCf4NI5BBcA4sFNBJAAmatdlD7id+4kSSkTlIlBUudWidMoQzEczk+tFGHSd3Mp2dc205SlbmJhktWeOUCxdqmwzFljlV3L8ZvGllkVBXyR bdeveaux@ukcloud.com"
+  name = "ukcloudos"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDggzO/9DNQzp8aPdvx0W+IqlbmbhpIgv1r2my1xOsVthFgx4HLiTB/2XEuEqVpwh5F+20fDn5Juox9jZAz+z3i5EI63ojpIMCKFDqDfFlIl54QPZVJUJVyQOe7Jzl/pmDJRU7vxTbdtZNYWSwjMjfZmQjGQhDd5mM9spQf3me5HsYY9Tko1vxGXcPE1WUyV60DrqSSBkrkSyf+mILXq43K1GszVj3JuYHCY/BBrupkhA126p6EoPtNKld4EyEJzDDNvK97+oyC38XKEg6lBgAngj4FnmG8cjLRXvbPU4gQNCqmrVUMljr3gYga+ZiPoj81NOuzauYNcbt6j+R1/B9qlze7VgNPYVv3ERzkboBdIx0WxwyTXg+3BHhY+E7zY1jLnO5Bdb40wDwl7AlUsOOriHL6fSBYuz2hRIdp0+upG6CNQnvg8pXNaNXNVPcNFPGLD1PuCJiG6x84+tLC2uAb0GWxAEVtWEMD1sBCp066dHwsivmQrYRxsYRHnlorlvdMSiJxpRo/peyiqEJ9Sa6OPl2A5JeokP1GxXJ6hyOoBn4h5WSuUVL6bS4J2ta7nA0fK6L6YreHV+dMdPZCZzSG0nV5qvSaAkdL7KuM4eeOvwcXAYMwZJPj+dCnGzwdhUIp/FtRy62mSHv5/kr+lVznWv2b2yl8L95SKAdfeOiFiQ== opensource@ukcloud.com"
 }
 
 resource "openstack_networking_network_v2" "example_network1" {
@@ -50,9 +50,27 @@ resource "openstack_networking_floatingip_v2" "example_floatip_1" {
   pool = "internet"
 }
 
+data "template_file" "cloudinit" {
+    template = "cloudinit.sh"
+    vars {
+        application_env = "dev"
+    }
+}
+
 resource "openstack_compute_instance_v2" "example_instance" {
   name            = "example_instance"
-  image_id        = "8e892f81-2197-464a-9b6b-1a5045735f5d"
+
+  #coreos
+  #image_id        = "8e892f81-2197-464a-9b6b-1a5045735f5d"
+  
+  # centos7
+  #image_id        = "0f1785b3-33c3-451e-92ce-13a35d991d60"
+  
+  # docker nginx
+  #image_id        = "e24c8d96-4520-4554-b30a-14fec3605bc2"
+
+  # centos7 lamp packer build
+  image_id = "d99aea0b-2f50-4672-a5dc-4b95c114b3fe"
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
@@ -60,6 +78,8 @@ resource "openstack_compute_instance_v2" "example_instance" {
   metadata {
     this = "that"
   }
+
+  user_data =  "${data.template_file.cloudinit.rendered}"
 
   network {
     name        = "${openstack_networking_network_v2.example_network1.name}"
