@@ -64,6 +64,9 @@ resource "openstack_compute_instance_v2" "example_instance" {
 
   #coreos
   #image_id        = "8e892f81-2197-464a-9b6b-1a5045735f5d"
+
+  #coreos-docker-beta
+  image_id        = "909fce5c-3bfc-4814-8a7d-a58e55d0d983"
   
   # centos7
   #image_id        = "0f1785b3-33c3-451e-92ce-13a35d991d60"
@@ -72,7 +75,7 @@ resource "openstack_compute_instance_v2" "example_instance" {
   #image_id        = "e24c8d96-4520-4554-b30a-14fec3605bc2"
 
   # centos7 lamp packer build
-  image_id = "912e4218-963a-4580-a27d-72e5e195c4f5"
+  #image_id = "912e4218-963a-4580-a27d-72e5e195c4f5"
   
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
