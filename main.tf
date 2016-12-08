@@ -51,7 +51,7 @@ resource "openstack_networking_floatingip_v2" "example_floatip_1" {
 }
 
 data "template_file" "cloudinit" {
-    template = "cloudinit.sh"
+    template = "${file("cloudinit.sh")}"
     vars {
         application_env = "dev"
     }
@@ -70,14 +70,11 @@ resource "openstack_compute_instance_v2" "example_instance" {
   #image_id        = "e24c8d96-4520-4554-b30a-14fec3605bc2"
 
   # centos7 lamp packer build
-  image_id = "d99aea0b-2f50-4672-a5dc-4b95c114b3fe"
+  image_id = "13bc3623-cb50-4709-9fc5-8897995b4590"
+  
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
-
-  metadata {
-    this = "that"
-  }
 
   user_data =  "${data.template_file.cloudinit.rendered}"
 
