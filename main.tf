@@ -50,6 +50,10 @@ resource "openstack_networking_floatingip_v2" "example_floatip_1" {
   pool = "internet"
 }
 
+resource "openstack_networking_floatingip_v2" "example_floatip_2" {
+  pool = "internet"
+}
+
 data "template_file" "cloudinit" {
     template = "${file("cloudinit.sh")}"
     vars {
@@ -61,21 +65,10 @@ data "template_file" "cloudinit" {
 
 resource "openstack_compute_instance_v2" "example_instance" {
   name            = "example_instance"
-
-  #coreos
-  #image_id        = "8e892f81-2197-464a-9b6b-1a5045735f5d"
+  count = 1
 
   #coreos-docker-beta
   image_id        = "909fce5c-3bfc-4814-8a7d-a58e55d0d983"
-  
-  # centos7
-  #image_id        = "0f1785b3-33c3-451e-92ce-13a35d991d60"
-  
-  # docker nginx
-  #image_id        = "e24c8d96-4520-4554-b30a-14fec3605bc2"
-
-  # centos7 lamp packer build
-  #image_id = "912e4218-963a-4580-a27d-72e5e195c4f5"
   
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
@@ -86,5 +79,36 @@ resource "openstack_compute_instance_v2" "example_instance" {
   network {
     name        = "${openstack_networking_network_v2.example_network1.name}"
     floating_ip = "${openstack_networking_floatingip_v2.example_floatip_1.address}"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      # Create TLS certs
+      "echo 'IP.1 = ${self.network.0.fixed_ip_v4}' > internalip",
+      "docker swarm init --advertise-addr ${self.network.0.fixed_ip_v4}"
+    ]
+    connection {
+        user = "core"
+        host = "${openstack_networking_floatingip_v2.example_floatip_1.address}"
+    }
+  }
+}
+
+resource "openstack_compute_instance_v2" "example_instance2" {
+  name            = "example_instance2"
+  count = 1
+
+  #coreos-docker-beta
+  image_id        = "909fce5c-3bfc-4814-8a7d-a58e55d0d983"
+  
+  flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
+  key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
+  security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
+
+  user_data =  "${data.template_file.cloudinit.rendered}"
+
+  network {
+    name        = "${openstack_networking_network_v2.example_network1.name}"
+    floating_ip = "${openstack_networking_floatingip_v2.example_floatip_2.address}"
   }
 }

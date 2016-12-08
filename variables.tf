@@ -1,7 +1,7 @@
 variable "clone_location" {
-    default = "/srv"
+    default = "docker-swarm"
 }
 
 variable "git_repo" {
-	default = "https://github.com/bobbydeveaux/dummyphp.git"
+	default = "https://github.com/UKCloud/openstack-docker-swarm.git"
 }
