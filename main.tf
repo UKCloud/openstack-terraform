@@ -70,7 +70,7 @@ resource "openstack_compute_instance_v2" "example_instance" {
   #image_id        = "e24c8d96-4520-4554-b30a-14fec3605bc2"
 
   # centos7 lamp packer build
-  image_id = "13bc3623-cb50-4709-9fc5-8897995b4590"
+  image_id = "912e4218-963a-4580-a27d-72e5e195c4f5"
   
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
