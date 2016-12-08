@@ -54,6 +54,8 @@ data "template_file" "cloudinit" {
     template = "${file("cloudinit.sh")}"
     vars {
         application_env = "dev"
+        git_repo = "${var.git_repo}"
+        clone_location = "${var.clone_location}"
     }
 }
 
