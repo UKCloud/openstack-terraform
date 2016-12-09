@@ -127,8 +127,6 @@ resource "openstack_compute_instance_v2" "swarm_slave" {
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
 
-  user_data =  "${data.template_file.cloudinit.rendered}"
-
   network {
     name        = "${openstack_networking_network_v2.example_network1.name}"
     floating_ip = "${element(openstack_networking_floatingip_v2.example_floatip_slaves.*.address, count.index)}"
