@@ -72,7 +72,6 @@ resource "openstack_networking_floatingip_v2" "example_floatip_manager" {
 
 resource "openstack_networking_floatingip_v2" "example_floatip_slaves" {
   pool = "internet"
-  count = 2
 }
 
 data "template_file" "cloudinit" {
@@ -80,7 +79,14 @@ data "template_file" "cloudinit" {
     vars {
         application_env = "dev"
         git_repo = "${var.git_repo}"
-        clone_location = "${var.clone_location}"
+        clone_location = "${var.clone_location}"   
+    }
+}
+
+data "template_file" "slaveinit" {
+    template = "${file("slaveinit.sh")}"
+    vars {
+        swarm_manager = "${openstack_compute_instance_v2.swarm_manager.access_ip_v4}"
     }
 }
 
@@ -89,7 +95,7 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
   count = 1
 
   #coreos-docker-beta
-  image_id        = "909fce5c-3bfc-4814-8a7d-a58e55d0d983"
+  image_id        = "589c614e-32e5-49ad-aeea-69ebce553d8b"
   
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
@@ -118,37 +124,19 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
 
 resource "openstack_compute_instance_v2" "swarm_slave" {
   name            = "swarm_slave_${count.index}"
-  count = 2
+  count = 10
 
   #coreos-docker-beta
-  image_id        = "909fce5c-3bfc-4814-8a7d-a58e55d0d983"
+  image_id        = "589c614e-32e5-49ad-aeea-69ebce553d8b"
   
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
 
+  user_data =  "${data.template_file.slaveinit.rendered}"
+
   network {
     name        = "${openstack_networking_network_v2.example_network1.name}"
-    floating_ip = "${element(openstack_networking_floatingip_v2.example_floatip_slaves.*.address, count.index)}"
   }
 
-  provisioner "file" {
-    source = "/Users/bobby/.ssh/ukcloudos"
-    destination = "/home/core/.ssh/key.pem"
-    connection {
-        user = "core"
-        host = "${element(openstack_networking_floatingip_v2.example_floatip_slaves.*.address, count.index)}"
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo scp -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null -i ~/.ssh/key.pem core@${openstack_compute_instance_v2.swarm_manager.access_ip_v4}:/home/core/token .",
-      "sudo docker swarm join --token $(cat /home/core/token) ${openstack_compute_instance_v2.swarm_manager.access_ip_v4}"
-    ]
-    connection {
-        user = "core"
-        host = "${element(openstack_networking_floatingip_v2.example_floatip_slaves.*.address, count.index)}"
-    }
-  }
 }
