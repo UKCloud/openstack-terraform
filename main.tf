@@ -83,6 +83,13 @@ data "template_file" "cloudinit" {
     }
 }
 
+data "template_file" "managerinit" {
+    template = "${file("managerinit.sh")}"
+    vars {
+        swarm_manager = "${openstack_compute_instance_v2.swarm_manager.access_ip_v4}"
+    }
+}
+
 data "template_file" "slaveinit" {
     template = "${file("slaveinit.sh")}"
     vars {
@@ -91,7 +98,7 @@ data "template_file" "slaveinit" {
 }
 
 resource "openstack_compute_instance_v2" "swarm_manager" {
-  name            = "swarm_manager"
+  name            = "swarm_manager_0"
   count = 1
 
   #coreos-docker-beta
@@ -113,12 +120,31 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
       # Create TLS certs
       "echo 'IP.1 = ${self.network.0.fixed_ip_v4}' > internalip",
       "docker swarm init --advertise-addr ${self.network.0.fixed_ip_v4}",
-      "sudo docker swarm join-token --quiet worker > /home/core/token"
+      "sudo docker swarm join-token --quiet worker > /home/core/worker-token",
+      "sudo docker swarm join-token --quiet manager > /home/core/manager-token"
     ]
     connection {
         user = "core"
         host = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
     }
+  }
+}
+
+resource "openstack_compute_instance_v2" "swarm_managerx" {
+  name            = "swarm_manager_${count.index+1}"
+  count = 2
+
+  #coreos-docker-beta
+  image_id        = "589c614e-32e5-49ad-aeea-69ebce553d8b"
+  
+  flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
+  key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
+  security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
+
+  user_data       =  "${data.template_file.managerinit.rendered}"
+
+  network {
+    name          = "${openstack_networking_network_v2.example_network1.name}"
   }
 }
 
