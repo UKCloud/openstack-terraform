@@ -5,3 +5,7 @@ variable "clone_location" {
 variable "git_repo" {
 	default = "https://github.com/UKCloud/openstack-docker-swarm.git"
 }
+
+variable "swarm_node_count" {
+	default = 1
+}

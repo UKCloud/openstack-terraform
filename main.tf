@@ -94,6 +94,7 @@ data "template_file" "slaveinit" {
     template = "${file("slaveinit.sh")}"
     vars {
         swarm_manager = "${openstack_compute_instance_v2.swarm_manager.access_ip_v4}"
+        node_count = "${var.swarm_node_count + 3}"
     }
 }
 
@@ -104,7 +105,7 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
   #coreos-docker-beta
   image_id        = "589c614e-32e5-49ad-aeea-69ebce553d8b"
   
-  flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
+  flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
 
@@ -132,12 +133,12 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
 
 resource "openstack_compute_instance_v2" "swarm_managerx" {
   name            = "swarm_manager_${count.index+1}"
-  count = 2
+  count           = 2
 
   #coreos-docker-beta
   image_id        = "589c614e-32e5-49ad-aeea-69ebce553d8b"
   
-  flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
+  flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
 
@@ -150,7 +151,7 @@ resource "openstack_compute_instance_v2" "swarm_managerx" {
 
 resource "openstack_compute_instance_v2" "swarm_slave" {
   name            = "swarm_slave_${count.index}"
-  count = 10
+  count           = "${var.swarm_node_count}"
 
   #coreos-docker-beta
   image_id        = "589c614e-32e5-49ad-aeea-69ebce553d8b"
