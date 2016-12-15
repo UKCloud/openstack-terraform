@@ -7,5 +7,5 @@ variable "git_repo" {
 }
 
 variable "swarm_node_count" {
-	default = 1
+	default = 10
 }
