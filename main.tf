@@ -78,8 +78,6 @@ data "template_file" "cloudinit" {
     template = "${file("cloudinit.sh")}"
     vars {
         application_env = "dev"
-        git_repo = "${var.git_repo}"
-        clone_location = "${var.clone_location}"   
     }
 }
 
@@ -118,7 +116,7 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
 
   provisioner "remote-exec" {
     inline = [
-      # Create TLS certs
+      # Bring up the Swarm!
       "echo 'IP.1 = ${self.network.0.fixed_ip_v4}' > internalip",
       "docker swarm init --advertise-addr ${self.network.0.fixed_ip_v4}",
       "sudo docker swarm join-token --quiet worker > /home/core/worker-token",
