@@ -100,8 +100,8 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
   name            = "swarm_manager_0"
   count = 1
 
-  #coreos-docker-beta
-  image_id        = "589c614e-32e5-49ad-aeea-69ebce553d8b"
+  #coreos-docker-alpha
+  image_id        = "0fe61d2f-0f9b-4dc8-8706-b45771f86d10"
   
   flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
@@ -129,12 +129,13 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
   }
 }
 
+
 resource "openstack_compute_instance_v2" "swarm_managerx" {
   name            = "swarm_manager_${count.index+1}"
   count           = 2
 
   #coreos-docker-beta
-  image_id        = "589c614e-32e5-49ad-aeea-69ebce553d8b"
+  image_id        = "0fe61d2f-0f9b-4dc8-8706-b45771f86d10"
   
   flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
@@ -152,7 +153,7 @@ resource "openstack_compute_instance_v2" "swarm_slave" {
   count           = "${var.swarm_node_count}"
 
   #coreos-docker-beta
-  image_id        = "589c614e-32e5-49ad-aeea-69ebce553d8b"
+  image_id        = "0fe61d2f-0f9b-4dc8-8706-b45771f86d10"
   
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
@@ -163,5 +164,4 @@ resource "openstack_compute_instance_v2" "swarm_slave" {
   network {
     name        = "${openstack_networking_network_v2.example_network1.name}"
   }
-
 }
