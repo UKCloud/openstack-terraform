@@ -1,3 +1,3 @@
 variable "swarm_node_count" {
-	default = 10
+	default = 5
 }

@@ -43,6 +43,9 @@ services:
 chown core:core /home/core/docker-compose.yml
 
 docker swarm init
+docker swarm join-token --quiet worker > /home/core/worker-token
+docker swarm join-token --quiet manager > /home/core/manager-token
+
 docker stack deploy --compose-file /home/core/docker-compose.yml mystack > /dev/null
 #docker pull bobbydvo/ukc_nginx:latest
 #docker pull bobbydvo/ukc_php-fpm:latest

@@ -70,10 +70,6 @@ resource "openstack_networking_floatingip_v2" "example_floatip_manager" {
   pool = "internet"
 }
 
-resource "openstack_networking_floatingip_v2" "example_floatip_slaves" {
-  pool = "internet"
-}
-
 data "template_file" "cloudinit" {
     template = "${file("cloudinit.sh")}"
     vars {
@@ -114,19 +110,6 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
     floating_ip = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      # Bring up the Swarm!
-      "echo 'IP.1 = ${self.network.0.fixed_ip_v4}' > internalip",
-      "docker swarm init --advertise-addr ${self.network.0.fixed_ip_v4}",
-      "sudo docker swarm join-token --quiet worker > /home/core/worker-token",
-      "sudo docker swarm join-token --quiet manager > /home/core/manager-token"
-    ]
-    connection {
-        user = "core"
-        host = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
-    }
-  }
 }
 
 
@@ -148,6 +131,7 @@ resource "openstack_compute_instance_v2" "swarm_managerx" {
   }
 }
 
+
 resource "openstack_compute_instance_v2" "swarm_slave" {
   name            = "swarm_slave_${count.index}"
   count           = "${var.swarm_node_count}"
@@ -165,3 +149,4 @@ resource "openstack_compute_instance_v2" "swarm_slave" {
     name        = "${openstack_networking_network_v2.example_network1.name}"
   }
 }
+

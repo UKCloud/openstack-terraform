@@ -16,3 +16,7 @@ sudo docker swarm join --token $(cat /home/core/worker-token) ${swarm_manager}
 # Hence the issue above.
 ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service scale mystack_php-fpm=${node_count}"
 ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service scale mystack_web=${node_count}"
+
+## Forces redistribution across all nodes
+ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service update --force mystack_php-fpm"
+ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service update --force mystack_web"
