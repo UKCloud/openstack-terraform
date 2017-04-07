@@ -14,9 +14,11 @@ sudo docker swarm join --token $(cat /home/core/worker-token) ${swarm_manager}
 # Scale to the number of instances we should have once the script has finished.
 # This means it may scale to 50 even though we only have 10, with 40 still processing.
 # Hence the issue above.
-ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service scale mystack_php-fpm=${node_count}"
-ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service scale mystack_web=${node_count}"
+#ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service scale mystack_php-fpm=${node_count}"
+#ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service scale mystack_web=${node_count}"
+#ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service scale mystack_collectd=${node_count}"
 
 ## Forces redistribution across all nodes
-ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service update --force mystack_php-fpm"
-ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service update --force mystack_web"
+#ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service update --force mystack_php-fpm"
+#ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service update --force mystack_web"
+#ssh -o StrictHostKeyChecking=no -o NoHostAuthenticationForLocalhost=yes -o UserKnownHostsFile=/dev/null  -i /home/core/.ssh/key.pem core@${swarm_manager} "docker service update --force mystack_collectd"

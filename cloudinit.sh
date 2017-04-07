@@ -15,8 +15,7 @@ services:
     environment:
       - APPLICATION_ENV=prod
     deploy:
-      mode: replicated
-      replicas: 1
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -31,14 +30,48 @@ services:
     ports:
       - "80:80"
     deploy:
-      mode: replicated
-      replicas: 1
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
         failure_action: continue
         monitor: 60s
         max_failure_ratio: 0.3
+  elasticsearch:
+    tty: true
+    image: bobbydvo/ukc_elasticsearch:latest
+    ports:
+      - "9200:9200"
+    deploy:
+      mode: replicated
+      replicas: 1
+  kibana:
+    tty: true
+    image: bobbydvo/ukc_kibana:latest
+    ports:
+      - "5601:5601"
+    links:
+      - "elasticsearch"
+    deploy:
+      mode: replicated
+      replicas: 1
+  logstash:
+    tty: true
+    image: bobbydvo/ukc_logstash:latest
+    links:
+      - "elasticsearch"
+    deploy:
+      mode: replicated
+      replicas: 1
+  collectd:
+    tty: true
+    image: bobbydvo/ukc_collectd:latest
+    depends_on:
+      - logstash
+    deploy:
+      mode: global
+
+
 ' > /home/core/docker-compose.yml 
 chown core:core /home/core/docker-compose.yml
 
