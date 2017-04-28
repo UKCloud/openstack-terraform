@@ -44,6 +44,20 @@ resource "openstack_compute_secgroup_v2" "example_secgroup_1" {
   }
 
   rule {
+    ip_protocol = "tcp"
+    from_port   = 3000
+    to_port     = 3000
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    ip_protocol = "tcp"
+    from_port   = 2376
+    to_port     = 2376
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
     ip_protocol = "icmp"
     from_port   = "-1"
     to_port     = "-1"
@@ -77,13 +91,6 @@ resource "openstack_networking_floatingip_v2" "example_floatip_manager" {
   pool = "internet"
 }
 
-data "template_file" "cloudinit" {
-    template = "${file("cloudinit.sh")}"
-    vars {
-        application_env = "dev"
-    }
-}
-
 data "template_file" "managerinit" {
     template = "${file("managerinit.sh")}"
     vars {
@@ -104,28 +111,49 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
   count = 1
 
   #coreos-docker-alpha
-  image_id        = "0fe61d2f-0f9b-4dc8-8706-b45771f86d10"
+  image_id        = "ff73ea03-6d7f-43b2-a689-4a3e0f9b8704"
   
   flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
-
-  user_data =  "${data.template_file.cloudinit.rendered}"
 
   network {
     name        = "${openstack_networking_network_v2.example_network1.name}"
     floating_ip = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
   }
 
-}
+  provisioner "file" {
+    source      = "docker-compose.yml"
+    destination = "/home/core/docker-compose.yml"
+    connection {
+      host = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
+      user = "core"
+      timeout = "1m"
+    }
+  }
 
+  provisioner "remote-exec" {
+    inline = [
+      "chown core:core /home/core/docker-compose.yml",
+      "docker swarm init",
+      "docker swarm join-token --quiet worker > /home/core/worker-token",
+      "docker swarm join-token --quiet manager > /home/core/manager-token",
+      "docker stack deploy --compose-file /home/core/docker-compose.yml mystack > /dev/null"
+    ]
+    connection {
+      host = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
+      user = "core"
+      timeout = "1m"
+    }
+  }
+}
 
 resource "openstack_compute_instance_v2" "swarm_managerx" {
   name            = "swarm_manager_${count.index+1}"
   count           = 2
 
-  #coreos-docker-beta
-  image_id        = "0fe61d2f-0f9b-4dc8-8706-b45771f86d10"
+  #coreos-docker-alpha
+  image_id        = "ff73ea03-6d7f-43b2-a689-4a3e0f9b8704"
   
   flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
@@ -143,8 +171,8 @@ resource "openstack_compute_instance_v2" "swarm_slave" {
   name            = "swarm_slave_${count.index}"
   count           = "${var.swarm_node_count}"
 
-  #coreos-docker-beta
-  image_id        = "0fe61d2f-0f9b-4dc8-8706-b45771f86d10"
+  #coreos-docker-alpha
+  image_id        = "ff73ea03-6d7f-43b2-a689-4a3e0f9b8704"
   
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
@@ -156,4 +184,3 @@ resource "openstack_compute_instance_v2" "swarm_slave" {
     name        = "${openstack_networking_network_v2.example_network1.name}"
   }
 }
-
