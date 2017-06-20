@@ -1,10 +1,7 @@
 provider "openstack" {
 }
 
-resource "openstack_compute_keypair_v2" "test-keypair" {
-  name = "ukcloudos"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDggzO/9DNQzp8aPdvx0W+IqlbmbhpIgv1r2my1xOsVthFgx4HLiTB/2XEuEqVpwh5F+20fDn5Juox9jZAz+z3i5EI63ojpIMCKFDqDfFlIl54QPZVJUJVyQOe7Jzl/pmDJRU7vxTbdtZNYWSwjMjfZmQjGQhDd5mM9spQf3me5HsYY9Tko1vxGXcPE1WUyV60DrqSSBkrkSyf+mILXq43K1GszVj3JuYHCY/BBrupkhA126p6EoPtNKld4EyEJzDDNvK97+oyC38XKEg6lBgAngj4FnmG8cjLRXvbPU4gQNCqmrVUMljr3gYga+ZiPoj81NOuzauYNcbt6j+R1/B9qlze7VgNPYVv3ERzkboBdIx0WxwyTXg+3BHhY+E7zY1jLnO5Bdb40wDwl7AlUsOOriHL6fSBYuz2hRIdp0+upG6CNQnvg8pXNaNXNVPcNFPGLD1PuCJiG6x84+tLC2uAb0GWxAEVtWEMD1sBCp066dHwsivmQrYRxsYRHnlorlvdMSiJxpRo/peyiqEJ9Sa6OPl2A5JeokP1GxXJ6hyOoBn4h5WSuUVL6bS4J2ta7nA0fK6L6YreHV+dMdPZCZzSG0nV5qvSaAkdL7KuM4eeOvwcXAYMwZJPj+dCnGzwdhUIp/FtRy62mSHv5/kr+lVznWv2b2yl8L95SKAdfeOiFiQ== opensource@ukcloud.com"
-}
+
 
 resource "openstack_networking_network_v2" "example_network2" {
   name           = "example_network_2"
@@ -51,19 +48,23 @@ resource "openstack_networking_floatingip_v2" "example_floatip_manager" {
   pool = "internet"
 }
 
+resource "openstack_compute_floatingip_associate_v2" "fip_1" {
+  floating_ip = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
+  instance_id = "${openstack_compute_instance_v2.example_host.id}"
+}
+
 resource "openstack_compute_instance_v2" "example_host" {
   name            = "example_host"
   count = 1
 
-  #coreos-docker-alpha
+  #Centos7
   image_id        = "0f1785b3-33c3-451e-92ce-13a35d991d60"
   
-  flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
-  key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
+  flavor_id       = "51043dfe-25ec-4fdb-9219-36e5700e076e"
+  key_pair        = "ukcloudos"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_2.name}"]
 
   network {
     name        = "${openstack_networking_network_v2.example_network2.name}"
-    floating_ip = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
   }
 }
