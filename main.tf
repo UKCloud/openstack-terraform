@@ -106,21 +106,9 @@ data "template_file" "slaveinit" {
     }
 }
 
-resource "openstack_compute_instance_v2" "swarm_manager" {
-  name            = "swarm_manager_0"
-  count = 1
-
-  #coreos-docker-alpha
-  image_id        = "ff73ea03-6d7f-43b2-a689-4a3e0f9b8704"
-  
-  flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
-  key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
-  security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
-
-  network {
-    name        = "${openstack_networking_network_v2.example_network1.name}"
-    floating_ip = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
-  }
+resource "openstack_compute_floatingip_associate_v2" "fip_1" {
+  floating_ip = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
+  instance_id = "${openstack_compute_instance_v2.swarm_manager.id}"
 
   provisioner "file" {
     source      = "docker-compose.yml"
@@ -146,6 +134,25 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
       timeout = "1m"
     }
   }
+
+}
+
+resource "openstack_compute_instance_v2" "swarm_manager" {
+  name            = "swarm_manager_0"
+  count = 1
+
+  #coreos-docker-alpha
+  image_id        = "ff73ea03-6d7f-43b2-a689-4a3e0f9b8704"
+  
+  flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
+  key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
+  security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
+
+  network {
+    name        = "${openstack_networking_network_v2.example_network1.name}"
+  }
+
+  
 }
 
 resource "openstack_compute_instance_v2" "swarm_managerx" {
