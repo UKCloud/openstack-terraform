@@ -19,8 +19,8 @@ resource "openstack_networking_subnet_v2" "example_subnet2" {
   dns_nameservers = ["8.8.8.8", "8.8.4.4"]
 }
 
-resource "openstack_compute_secgroup_v2" "example_secgroup_2" {
-  name = "example_secgroup_2"
+resource "openstack_compute_secgroup_v2" "example_secgroup" {
+  name = "example_secgroup"
   description = "an example security group"
   rule {
     ip_protocol = "tcp"
@@ -66,7 +66,7 @@ resource "openstack_compute_instance_v2" "example_host" {
   
   flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
   key_pair        = "${openstack_compute_keypair_v2.keypair.name}"
-  security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_2.name}"]
+  security_groups = ["${openstack_compute_secgroup_v2.example_secgroup.name}"]
 
   network {
     name        = "${openstack_networking_network_v2.example_network2.name}"

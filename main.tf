@@ -142,7 +142,7 @@ resource "openstack_compute_instance_v2" "swarm_manager" {
   count = 1
 
   #coreos-docker-alpha
-  image_id        = "ff73ea03-6d7f-43b2-a689-4a3e0f9b8704"
+  image_id        = "9804b597-4b13-41b5-a77d-2fc6d798d4ac"
   
   flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
@@ -160,7 +160,7 @@ resource "openstack_compute_instance_v2" "swarm_managerx" {
   count           = 2
 
   #coreos-docker-alpha
-  image_id        = "ff73ea03-6d7f-43b2-a689-4a3e0f9b8704"
+  image_id        = "9804b597-4b13-41b5-a77d-2fc6d798d4ac"
   
   flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
@@ -179,15 +179,16 @@ resource "openstack_compute_instance_v2" "swarm_slave" {
   count           = "${var.swarm_node_count}"
 
   #coreos-docker-alpha
-  image_id        = "ff73ea03-6d7f-43b2-a689-4a3e0f9b8704"
+  image_id        = "9804b597-4b13-41b5-a77d-2fc6d798d4ac"
   
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
 
-  user_data =  "${data.template_file.slaveinit.rendered}"
+  user_data       = "${data.template_file.slaveinit.rendered}"
 
   network {
     name        = "${openstack_networking_network_v2.example_network1.name}"
   }
 }
+
