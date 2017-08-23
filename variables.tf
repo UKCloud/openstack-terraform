@@ -1,7 +1,3 @@
-variable "clone_location" {
-    default = "/srv"
-}
-
-variable "git_repo" {
-	default = "https://github.com/bobbydeveaux/dummyphp.git"
+variable "swarm_node_count" {
+	default = 5
 }

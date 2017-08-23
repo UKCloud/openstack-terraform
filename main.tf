@@ -23,16 +23,57 @@ resource "openstack_compute_secgroup_v2" "example_secgroup_1" {
   name = "example_secgroup_1"
   description = "an example security group"
   rule {
+    ip_protocol = "tcp"
     from_port   = 22
     to_port     = 22
-    ip_protocol = "tcp"
     cidr        = "0.0.0.0/0"
   }
-   rule {
+  
+  rule {
+    ip_protocol = "tcp"
     from_port   = 80
     to_port     = 80
-    ip_protocol = "tcp"
     cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    ip_protocol = "tcp"
+    from_port   = 5601
+    to_port     = 5601
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    ip_protocol = "tcp"
+    from_port   = 3000
+    to_port     = 3000
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    ip_protocol = "tcp"
+    from_port   = 2376
+    to_port     = 2376
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    ip_protocol = "icmp"
+    from_port   = "-1"
+    to_port     = "-1"
+    self        = true
+  }
+  rule {
+    ip_protocol = "tcp"
+    from_port   = "1"
+    to_port     = "65535"
+    self        = true
+  }
+  rule {
+    ip_protocol = "udp"
+    from_port   = "1"
+    to_port     = "65535"
+    self        = true
   }
 }
 
@@ -46,42 +87,108 @@ resource "openstack_networking_router_interface_v2" "example_router_interface_1"
   subnet_id = "${openstack_networking_subnet_v2.example_subnet1.id}"
 }
 
-resource "openstack_networking_floatingip_v2" "example_floatip_1" {
+resource "openstack_networking_floatingip_v2" "example_floatip_manager" {
   pool = "internet"
 }
 
-data "template_file" "cloudinit" {
-    template = "${file("cloudinit.sh")}"
+data "template_file" "managerinit" {
+    template = "${file("managerinit.sh")}"
     vars {
-        application_env = "dev"
-        git_repo = "${var.git_repo}"
-        clone_location = "${var.clone_location}"
+        swarm_manager = "${openstack_compute_instance_v2.swarm_manager.access_ip_v4}"
     }
 }
 
-resource "openstack_compute_instance_v2" "example_instance" {
-  name            = "example_instance"
+data "template_file" "slaveinit" {
+    template = "${file("slaveinit.sh")}"
+    vars {
+        swarm_manager = "${openstack_compute_instance_v2.swarm_manager.access_ip_v4}"
+        node_count = "${var.swarm_node_count + 3}"
+    }
+}
 
-  #coreos
-  #image_id        = "8e892f81-2197-464a-9b6b-1a5045735f5d"
-  
-  # centos7
-  #image_id        = "0f1785b3-33c3-451e-92ce-13a35d991d60"
-  
-  # docker nginx
-  #image_id        = "e24c8d96-4520-4554-b30a-14fec3605bc2"
+resource "openstack_compute_floatingip_associate_v2" "fip_1" {
+  floating_ip = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
+  instance_id = "${openstack_compute_instance_v2.swarm_manager.id}"
 
-  # centos7 lamp packer build
-  image_id = "912e4218-963a-4580-a27d-72e5e195c4f5"
+  provisioner "file" {
+    source      = "docker-compose.yml"
+    destination = "/home/core/docker-compose.yml"
+    connection {
+      host = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
+      user = "core"
+      timeout = "1m"
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chown core:core /home/core/docker-compose.yml",
+      "docker swarm init",
+      "docker swarm join-token --quiet worker > /home/core/worker-token",
+      "docker swarm join-token --quiet manager > /home/core/manager-token",
+      "docker stack deploy --compose-file /home/core/docker-compose.yml mystack > /dev/null"
+    ]
+    connection {
+      host = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
+      user = "core"
+      timeout = "1m"
+    }
+  }
+
+}
+
+resource "openstack_compute_instance_v2" "swarm_manager" {
+  name            = "swarm_manager_0"
+  count = 1
+
+  #coreos-docker-alpha
+  image_id        = "9804b597-4b13-41b5-a77d-2fc6d798d4ac"
+  
+  flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
+  key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
+  security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
+
+  network {
+    name        = "${openstack_networking_network_v2.example_network1.name}"
+  }
+
+  
+}
+
+resource "openstack_compute_instance_v2" "swarm_managerx" {
+  name            = "swarm_manager_${count.index+1}"
+  count           = 2
+
+  #coreos-docker-alpha
+  image_id        = "9804b597-4b13-41b5-a77d-2fc6d798d4ac"
+  
+  flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
+  key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
+  security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
+
+  user_data       =  "${data.template_file.managerinit.rendered}"
+
+  network {
+    name          = "${openstack_networking_network_v2.example_network1.name}"
+  }
+}
+
+
+resource "openstack_compute_instance_v2" "swarm_slave" {
+  name            = "swarm_slave_${count.index}"
+  count           = "${var.swarm_node_count}"
+
+  #coreos-docker-alpha
+  image_id        = "9804b597-4b13-41b5-a77d-2fc6d798d4ac"
   
   flavor_id       = "c46be6d1-979d-4489-8ffe-e421a3c83fdd"
   key_pair        = "${openstack_compute_keypair_v2.test-keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.example_secgroup_1.name}"]
 
-  user_data =  "${data.template_file.cloudinit.rendered}"
+  user_data       = "${data.template_file.slaveinit.rendered}"
 
   network {
     name        = "${openstack_networking_network_v2.example_network1.name}"
-    floating_ip = "${openstack_networking_floatingip_v2.example_floatip_1.address}"
   }
 }
+
