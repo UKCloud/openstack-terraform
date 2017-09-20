@@ -61,7 +61,7 @@ resource "openstack_compute_instance_v2" "example_host" {
   count = 1
 
   #Centos7
-  image_id        = "0f1785b3-33c3-451e-92ce-13a35d991d60"
+  image_id        = "c09aceb5-edad-4392-bc78-197162847dd1"
   region          = "regionOne"
   
   flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
