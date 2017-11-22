@@ -51,17 +51,14 @@ resource "openstack_networking_floatingip_v2" "example_floatip_manager" {
   pool = "internet"
 }
 
-resource "openstack_compute_floatingip_associate_v2" "fip_1" {
-  floating_ip = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
-  instance_id = "${openstack_compute_instance_v2.example_host.id}"
-}
-
 resource "openstack_compute_instance_v2" "example_host" {
-  name            = "example_host"
-  count = 1
+  name            = "example_host_${count.index+1}"
+  count = 2
 
   #Centos7
   image_id        = "c09aceb5-edad-4392-bc78-197162847dd1"
+  #Packer-Built-Lamp
+  #image_id        = "52629f96-9542-41b7-91e0-402068cf52c4"
   region          = "regionOne"
   
   flavor_id       = "7d73f524-f9a1-4e80-bedf-57216aae8038"
@@ -71,4 +68,9 @@ resource "openstack_compute_instance_v2" "example_host" {
   network {
     name        = "${openstack_networking_network_v2.example_network2.name}"
   }
+}
+
+resource "openstack_compute_floatingip_associate_v2" "fip_1" {
+  floating_ip = "${openstack_networking_floatingip_v2.example_floatip_manager.address}"
+  instance_id = "${openstack_compute_instance_v2.example_host.0.id}"
 }
